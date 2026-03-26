@@ -1178,8 +1178,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
   <nav>
     <div class="tab-list" id="ops-tabs">
-      <button class="tab-btn active" onclick="showTab('report',this)">📋 업무 보고</button>
-      <button class="tab-btn" onclick="showTab('issues',this)">🚨 이슈 현황</button>
       <button class="tab-btn" onclick="showTab('compare',this)">📈 주간 비교</button>
       <button class="tab-btn" onclick="showTab('overview',this)">📊 이번주 개요</button>
       <button class="tab-btn" onclick="showTab('daily',this)">📅 일별 매출</button>
@@ -1301,6 +1299,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
   <!-- 경영자 요약 탭 -->
   
+
+<div class="tab-list" id="report-tabs" style="display:flex">
+  <button class="tab-btn active" onclick="showReportTab('report',this)">📋 업무 보고</button>
+  <button class="tab-btn" onclick="showReportTab('issues',this)">🚨 이슈 현황</button>
+</div>
 <div class="tab-panel active" id="tab-report">
   <div class="section-title">📋 업무 보고</div>
   <div id="rpt-week-selector" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -6175,5 +6178,54 @@ bootstrapStartPageFromLastData().catch(err=>{
 
 
 <script src="report.js"></script>
+
+<script>
+// 업무 보고 모드
+(function(){
+  var _origShowMode = window.showMode;
+  window.showMode = function(mode) {
+    var reportMode = document.getElementById('report-tabs');
+    var opsMode = document.getElementById('ops-tabs');
+    var execMode = document.getElementById('exec-tabs');
+    var reportBtn = document.getElementById('report-mode-btn');
+
+    if(mode === 'report') {
+      // 모든 탭 패널 숨기기
+      document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+      // 업무보고 패널 활성화
+      document.getElementById('tab-report') && document.getElementById('tab-report').classList.add('active');
+      // 탭 바 전환
+      if(reportMode) reportMode.style.display = 'flex';
+      if(opsMode) opsMode.style.display = 'none';
+      if(execMode) execMode.style.display = 'none';
+      // 모드 버튼 스타일
+      document.querySelectorAll('.mode-btn').forEach(function(b){
+        b.style.background=''; b.style.color=''; b.style.borderColor='';
+        b.classList.remove('active-mode');
+      });
+      if(reportBtn){reportBtn.style.background='#1D9E75';reportBtn.style.color='#fff';reportBtn.style.borderColor='#1D9E75';}
+    } else {
+      if(reportMode) reportMode.style.display = 'none';
+      if(_origShowMode) _origShowMode(mode);
+      // 리포트 버튼 비활성화
+      if(reportBtn){reportBtn.style.background='';reportBtn.style.color='';reportBtn.style.borderColor='';}
+    }
+  };
+
+  window.showReportTab = function(tabId, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+    document.querySelectorAll('#report-tabs .tab-btn').forEach(function(b){b.classList.remove('active');});
+    var panel = document.getElementById('tab-'+tabId);
+    if(panel) panel.classList.add('active');
+    if(btn) btn.classList.add('active');
+    if(tabId === 'issues' && typeof issueLoad === 'function') issueLoad();
+  };
+
+  // 첫 화면: 업무 보고 모드로 고정
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ window.showMode('report'); }, 50);
+  });
+})();
+</script>
 </body>
 </html>
