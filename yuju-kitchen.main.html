@@ -1168,7 +1168,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
       </div>
       <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:8px">
         <div class="mode-toggle" id="mode-toggle">
-          <button class="mode-btn active" id="mode-ops" data-mode="ops">📊 실무자 모드</button>
+          <button class="mode-btn active" id="mode-report" data-mode="report">📋 업무 보고</button>
+          <button class="mode-btn" id="mode-ops" data-mode="ops">📊 실무자 모드</button>
           <button class="mode-btn" id="mode-exec" data-mode="exec">💼 경영자 모드 🔒</button>
         </div>
         <button class="btn-reupload" id="btn-reupload">↩ 새 파일</button>
@@ -6225,6 +6226,100 @@ bootstrapStartPageFromLastData().catch(err=>{
   document.addEventListener('DOMContentLoaded', function(){
     setTimeout(function(){ window.showMode('report'); }, 50);
   });
+})();
+</script>
+
+<script id="report-mode-script">
+(function(){
+  function initReportMode(){
+    var modeToggle = document.getElementById('mode-toggle');
+    // mode-toggle에 있는 모든 버튼 이벤트
+    modeToggle && modeToggle.querySelectorAll('.mode-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var mode = this.dataset.mode || this.id.replace('mode-','');
+        activateMode(mode);
+        modeToggle.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active');});
+        this.classList.add('active');
+      });
+    });
+
+    function activateMode(mode){
+      var opsSection = document.getElementById('ops-tabs');
+      var execSection = document.getElementById('exec-tabs');
+      var reportPanel = document.getElementById('tab-report');
+      var issuesPanel = document.getElementById('tab-issues');
+      var mainContent = document.querySelector('.main-content, #main-content, .content-area');
+
+      // 모든 탭 패널 숨기기
+      document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
+
+      if(mode==='report'){
+        // 업무보고 모드: ops/exec 탭 숨기고 report/issues 패널만 표시
+        if(opsSection) opsSection.style.display='none';
+        if(execSection) execSection.style.display='none';
+        // report UI 표시
+        if(reportPanel) reportPanel.classList.add('active');
+        // 업무보고 탭 내부 서브탭
+        var rptSubTabs = document.getElementById('rpt-subtabs');
+        if(!rptSubTabs){
+          // 서브탭 생성
+          var subTabBar = document.createElement('div');
+          subTabBar.id = 'rpt-subtabs';
+          subTabBar.style.cssText = 'display:flex;gap:0;border-bottom:0.5px solid var(--border,#ddd);margin-bottom:0;background:var(--bg,#fff)';
+          subTabBar.innerHTML = '<button onclick="rptShowSub('report')" id="rst-report" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid #1D9E75;border-top:none;border-left:none;border-right:none;background:none;color:#0F6E56">📋 업무 보고</button>'
+            +'<button onclick="rptShowSub('issues')" id="rst-issues" style="padding:10px 16px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;border-top:none;border-left:none;border-right:none;background:none;color:var(--text-sub,#888)">🚨 이슈 현황</button>';
+          if(reportPanel && reportPanel.parentElement){
+            reportPanel.parentElement.insertBefore(subTabBar, reportPanel);
+          }
+        }
+        if(reportPanel) reportPanel.style.display='block';
+        var issP = document.getElementById('tab-issues');
+        if(issP) issP.style.display='none';
+
+      } else if(mode==='ops'){
+        if(opsSection){opsSection.style.display='flex';}
+        if(execSection) execSection.style.display='none';
+        // 첫 번째 ops 탭 활성화
+        var firstOpsTab = opsSection && opsSection.querySelector('.tab-btn:not(.tab-more-btn)');
+        if(firstOpsTab) firstOpsTab.click();
+
+      } else if(mode==='exec'){
+        if(opsSection) opsSection.style.display='none';
+        if(execSection) execSection.style.display='flex';
+        var firstExecTab = execSection && execSection.querySelector('.tab-btn');
+        if(firstExecTab) firstExecTab.click();
+      }
+    }
+
+    window.rptShowSub = function(sub){
+      var rp = document.getElementById('tab-report');
+      var ip = document.getElementById('tab-issues');
+      var rb = document.getElementById('rst-report');
+      var ib = document.getElementById('rst-issues');
+      if(sub==='report'){
+        if(rp) rp.style.display='block';
+        if(ip) ip.style.display='none';
+        if(rb){rb.style.borderBottomColor='#1D9E75';rb.style.color='#0F6E56';}
+        if(ib){ib.style.borderBottomColor='transparent';ib.style.color='var(--text-sub,#888)';}
+        issueLoad && issueLoad();
+      } else {
+        if(rp) rp.style.display='none';
+        if(ip) ip.style.display='block';
+        if(ib){ib.style.borderBottomColor='#D85A30';ib.style.color='#993C1D';}
+        if(rb){rb.style.borderBottomColor='transparent';rb.style.color='var(--text-sub,#888)';}
+        if(typeof issueLoad==='function') issueLoad();
+      }
+    };
+
+    // 초기 상태: 업무보고 모드로 시작
+    activateMode('report');
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', initReportMode);
+  } else {
+    setTimeout(initReportMode, 100);
+  }
 })();
 </script>
 </body>
