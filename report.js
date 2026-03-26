@@ -1,198 +1,89 @@
-
 (function(){
-const SB = 'https://hcdrqycgdcmwnqgahvqc.supabase.co';
-const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZHJxeWNnZGNtd25xZ2FodnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY3NzcwNTksImV4cCI6MjAyMjM1MzA1OX0.J2a3TkDPJDpEAGmNxGmqpF5d-YHJKl5vMD7oOI0kxPo';
-
-function sbQ(path, opts){
-  opts = opts || {};
-  return fetch(SB+'/rest/v1/'+path, Object.assign({headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=representation'}}, opts)).then(function(r){return r.json();});
-}
-
-function getMonday(d){
-  d = d || new Date();
-  var day = d.getDay(), diff = d.getDate() - day + (day===0?-6:1);
-  return new Date(new Date(d).setDate(diff)).toISOString().slice(0,10);
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  var wd = document.getElementById('rpt-week');
-  if(wd) wd.value = getMonday();
+var U="https://hcdrqycgdcmwnqgahvqc.supabase.co",K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZHJxeWNnZGNtd25xZ2FodnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNTc0NzMsImV4cCI6MjA4NzgzMzQ3M30._a88kW2GGWq4KFvcEnkWiu-Eo87wPBK2Y_im77gf0SE";
+function q(p,o){var h={"apikey":K,"Authorization":"Bearer "+K,"Content-Type":"application/json","Prefer":"return=representation"};if(o&&o.headers)Object.keys(o.headers).forEach(function(k){h[k]=o.headers[k];});return fetch(U+"/rest/v1/"+p,Object.assign({},o,{headers:h})).then(function(r){return r.json();});}
+function monday(){var d=new Date(),day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);return new Date(new Date(d).setDate(diff)).toISOString().slice(0,10);}
+document.addEventListener("DOMContentLoaded",function(){var w=document.getElementById("rpt-week");if(w)w.value=monday();});
+var RC=[];
+window.rptLoad=function(){
+var part=document.getElementById("rpt-part").value,week=document.getElementById("rpt-week").value;
+if(!week){alert("주간 시작일을 선택하세요");return;}
+var TL={subjective:"주관점수",numeric:"수치입력",hq_directive:"본사지침"};
+Promise.all([q("report_eval_items?part=eq."+part+"&is_active=eq.true&order=sort_order"),q("report_weekly_scores?week_start=eq."+week)]).then(function(r){
+var items=r[0],scores=r[1];RC=Array.isArray(items)?items:[];
+var sm={};if(Array.isArray(scores))scores.forEach(function(s){sm[s.item_id]=s;});
+var wrap=document.getElementById("rpt-items-wrap");
+if(!RC.length){wrap.innerHTML="<p style='color:#888;padding:20px'>항목 없음</p>";return;}
+wrap.innerHTML=RC.map(function(it){
+var s=sm[it.id]||{},isN=it.type==="numeric",isH=it.type==="hq_directive";
+var ti=it.target_value!=null?" (목표:"+it.target_value+")":"";
+var inp=isH?"<select data-id='"+it.id+"' class='rv' style='padding:5px 8px;border-radius:5px;border:1px solid #ccc;font-size:12px'><option value='100'"+(s.score===100?" selected":"")+">완료(100)</option><option value='50'"+(s.score===50?" selected":"")+">부분완료(50)</option><option value='0'"+(s.score===0&&s.score!==undefined?" selected":"")+">미완료(0)</option></select>"
+:"<input type='number' data-id='"+it.id+"' class='rv' min='0' max='"+(isN?9999:100)+"' value='"+(isN?(s.raw_value||""):(s.score!==undefined?s.score:0))+"' placeholder='"+(isN?"실제값":"0-100점")+"' style='width:80px;padding:5px 8px;border-radius:5px;border:1px solid #ccc;font-size:13px'>";
+return "<div style='background:var(--bg2,#f5f5f3);border-radius:8px;padding:12px;margin-bottom:6px'><div style='font-size:13px;font-weight:500;margin-bottom:4px'>"+it.title+"</div><div style='font-size:11px;color:#888;margin-bottom:8px'>"+TL[it.type]+ti+"</div><div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap'>"+inp+"<input type='text' data-id='"+it.id+"' class='rm' placeholder='메모(선택)' value='"+(s.memo||"")+"' style='flex:1;min-width:100px;padding:5px 8px;border-radius:5px;border:1px solid #ccc;font-size:12px'></div></div>";
+}).join("");
+}).catch(function(e){document.getElementById("rpt-items-wrap").innerHTML="<p style='color:#c00'>오류:"+e.message+"</p>";});
+};
+window.rptSave=function(){
+var week=document.getElementById("rpt-week").value;
+if(!week||!RC.length){alert("먼저 불러오기를 클릭하세요");return;}
+var rows=RC.map(function(it){
+var ve=document.querySelector(".rv[data-id='"+it.id+"']"),me=document.querySelector(".rm[data-id='"+it.id+"']");
+var rv=parseFloat(ve?ve.value:0)||0,sc;
+if(it.type==="hq_directive")sc=parseInt(ve?ve.value:0)||0;
+else if(it.type==="numeric"&&it.target_value)sc=Math.max(0,Math.min(100,Math.round((1-(rv-it.target_value)/it.target_value)*100)));
+else sc=Math.max(0,Math.min(100,rv));
+return{item_id:it.id,week_start:week,raw_value:rv,score:sc,evaluator:"점장",memo:me?me.value:""};
 });
-
-var rptCache = [];
-
-window.rptLoad = function(){
-  var part = document.getElementById('rpt-part').value;
-  var week = document.getElementById('rpt-week').value;
-  if(!week){alert('주간 시작일을 선택하세요'); return;}
-  var typeLabel = {subjective:'주관점수', numeric:'수치', hq_directive:'본사지침'};
-  Promise.all([
-    sbQ('report_eval_items?part=eq.'+part+'&is_active=eq.true&order=sort_order'),
-    sbQ('report_weekly_scores?week_start=eq.'+week)
-  ]).then(function(results){
-    var items = results[0], scores = results[1];
-    rptCache = items;
-    var scoreMap = {};
-    (scores||[]).forEach(function(s){ scoreMap[s.item_id] = s; });
-    var wrap = document.getElementById('rpt-items-wrap');
-    if(!Array.isArray(items)||!items.length){wrap.innerHTML='<p style="color:#888;font-size:13px">항목이 없습니다</p>';return;}
-    wrap.innerHTML = items.map(function(it){
-      var s = scoreMap[it.id]||{};
-      var isHq = it.type==='hq_directive', isNum = it.type==='numeric';
-      var selOpts = ['<option value="100"'+(s.score===100?' selected':'')+'>완료 (100점)</option>',
-        '<option value="50"'+(s.score===50?' selected':'')+'>부분완료 (50점)</option>',
-        '<option value="0"'+(s.score===0&&s.score!==undefined?' selected':'')+'>미완료 (0점)</option>'].join('');
-      return '<div style="background:var(--bg2,#f8f8f6);border-radius:8px;padding:12px;margin-bottom:2px">' +
-        '<div style="font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text,#333)">'+it.title+'</div>' +
-        '<div style="font-size:11px;color:#888;margin-bottom:6px">'+typeLabel[it.type]+(it.target_value!=null?' · 목표: '+it.target_value:' ')+'</div>' +
-        (isHq
-          ? '<select data-id="'+it.id+'" class="rpt-val" style="padding:5px 8px;border-radius:5px;border:1px solid #ddd;font-size:12px;background:var(--bg,#fff);color:var(--text,#333)">'+selOpts+'</select>'
-          : '<input type="number" data-id="'+it.id+'" class="rpt-val" min="0" max="'+(isNum?9999:100)+'" value="'+(isNum?(s.raw_value||''):(s.score||0))+'" placeholder="'+(isNum?'실제값':'0-100점')+'" style="width:80px;padding:5px 8px;border-radius:5px;border:1px solid #ddd;font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">') +
-        '<input type="text" data-id="'+it.id+'" class="rpt-memo" placeholder="메모(선택)" value="'+(s.memo||'')+'" style="margin-left:8px;padding:5px 8px;border-radius:5px;border:1px solid #ddd;font-size:12px;background:var(--bg,#fff);color:var(--text,#333);width:calc(100% - 110px)">' +
-        '</div>';
-    }).join('');
-  });
+fetch(U+"/rest/v1/report_weekly_scores",{method:"POST",headers:{"apikey":K,"Authorization":"Bearer "+K,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=representation"},body:JSON.stringify(rows)})
+.then(function(r){return r.json();}).then(function(d){var m=document.getElementById("rpt-msg");m.textContent=Array.isArray(d)?"저장완료("+d.length+"개)":"오류:"+JSON.stringify(d).substring(0,50);m.style.color=Array.isArray(d)?"#1D9E75":"#c00";setTimeout(function(){m.textContent="";},3000);});
 };
-
-window.rptSave = function(){
-  var week = document.getElementById('rpt-week').value;
-  if(!rptCache.length){alert('먼저 불러오기를 클릭하세요'); return;}
-  var rows = rptCache.map(function(it){
-    var valEl = document.querySelector('.rpt-val[data-id="'+it.id+'"]');
-    var memoEl = document.querySelector('.rpt-memo[data-id="'+it.id+'"]');
-    var rawVal = parseFloat(valEl ? valEl.value : 0)||0;
-    var score;
-    if(it.type==='hq_directive') score = parseInt(valEl?valEl.value:0)||0;
-    else if(it.type==='numeric' && it.target_value) score = Math.max(0,Math.min(100,Math.round((1-(rawVal-it.target_value)/it.target_value)*100)));
-    else score = Math.max(0,Math.min(100,rawVal));
-    return {item_id:it.id, week_start:week, raw_value:rawVal, score:score, evaluator:'점장', memo:memoEl?memoEl.value:''};
-  });
-  fetch(SB+'/rest/v1/report_weekly_scores', {
-    method:'POST',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'},
-    body:JSON.stringify(rows)
-  }).then(function(r){return r.json();}).then(function(d){
-    var msg = document.getElementById('rpt-msg');
-    msg.textContent = Array.isArray(d) ? '저장 완료 ('+d.length+'개)' : '오류: '+JSON.stringify(d).substring(0,50);
-    setTimeout(function(){msg.textContent='';},3000);
-  });
+window.rptSaveComment=function(){
+var week=document.getElementById("rpt-week").value,cmt=document.getElementById("rpt-sin-comment").value;
+if(!week)return;
+fetch(U+"/rest/v1/report_weekly_reports",{method:"POST",headers:{"apikey":K,"Authorization":"Bearer "+K,"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({week_start:week,sin_comment:cmt})})
+.then(function(){var m=document.getElementById("rpt-msg");m.textContent="총평저장완료";m.style.color="#1D9E75";setTimeout(function(){m.textContent="";},3000);});
 };
-
-window.rptSaveComment = function(){
-  var week = document.getElementById('rpt-week').value;
-  var comment = document.getElementById('rpt-sin-comment').value;
-  fetch(SB+'/rest/v1/report_weekly_reports', {
-    method:'POST',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-    body:JSON.stringify({week_start:week, sin_comment:comment})
-  }).then(function(){
-    var msg = document.getElementById('rpt-msg');
-    msg.textContent = '총평 저장 완료';
-    setTimeout(function(){msg.textContent='';},3000);
-  });
+var CI=null;
+window.issueShowForm=function(){document.getElementById("iss-form").style.display="block";};
+window.issueLoad=function(){
+var qs="report_issues?order=created_at.desc";
+var pEl=document.getElementById("iss-filter-part"),sEl=document.getElementById("iss-filter-status");
+if(pEl&&pEl.value)qs+="&part=eq."+pEl.value;if(sEl&&sEl.value)qs+="&status=eq."+sEl.value;
+q(qs).then(function(issues){
+var list=document.getElementById("iss-list");
+if(!Array.isArray(issues)||!issues.length){list.innerHTML="<p style='text-align:center;padding:30px;color:#888;font-size:13px'>등록된 이슈 없음</p>";return;}
+var SS={open:"background:#FCEBEB;color:#A32D2D",in_progress:"background:#FAEEDA;color:#854F0B",resolved:"background:#E1F5EE;color:#0F6E56"};
+var SL={open:"미해결",in_progress:"처리중",resolved:"완료"};
+var PL={kitchen:"주방",hall:"홀",service:"서비스",common:"공통"};
+var NS={open:"in_progress",in_progress:"resolved",resolved:"open"};
+var NL={open:"처리중으로",in_progress:"완료로",resolved:"재오픈"};
+var BC={high:"#D85A30",medium:"#EF9F27",low:"#1D9E75"};
+list.innerHTML=issues.map(function(iss){
+var st=iss.title.replace(/'/g,"").substring(0,25);
+return "<div style='background:var(--bg2,#f5f5f3);border-radius:8px;padding:12px;border-left:4px solid "+(BC[iss.priority]||"#ccc")+";margin-bottom:4px'><div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap'><span style='font-size:13px;font-weight:500;flex:1'>"+iss.title+"</span><span style='font-size:11px;padding:2px 8px;border-radius:10px;"+(SS[iss.status]||"")+"'>"+SL[iss.status]+"</span><span style='font-size:11px;color:#888'>"+(PL[iss.part]||iss.part)+"</span></div>"+(iss.description?"<div style='font-size:12px;color:#888;margin-bottom:6px'>"+iss.description+"</div>":"")+"<div style='display:flex;align-items:center;gap:8px;flex-wrap:wrap'>"+(iss.assignee?"<span style='font-size:11px;color:#888'>담당:"+iss.assignee+"</span>":"")+"<span style='font-size:11px;color:#888'>"+new Date(iss.created_at).toLocaleDateString("ko-KR")+"</span><button onclick='issueUpdateStatus(""+iss.id+"",""+NS[iss.status]+"")' style='padding:3px 9px;border-radius:5px;background:none;border:1px solid #ccc;font-size:11px;cursor:pointer'>→"+NL[iss.status]+"</button><button onclick='issueOpenComments(""+iss.id+"",""+st+"")' style='padding:3px 9px;border-radius:5px;background:none;border:1px solid #ccc;font-size:11px;cursor:pointer'>의견</button></div></div>";
+}).join("");});
 };
-
-// ── 이슈 ──
-var currentIssueId = null;
-
-window.issueShowForm = function(){ document.getElementById('iss-form').style.display='block'; };
-
-window.issueLoad = function(){
-  var q = 'report_issues?order=created_at.desc';
-  var p = (document.getElementById('iss-filter-part')||{}).value;
-  var s = (document.getElementById('iss-filter-status')||{}).value;
-  if(p) q += '&part=eq.'+p;
-  if(s) q += '&status=eq.'+s;
-  sbQ(q).then(function(issues){
-    var statusStyle = {open:'background:#FCEBEB;color:#A32D2D', in_progress:'background:#FAEEDA;color:#854F0B', resolved:'background:#E1F5EE;color:#0F6E56'};
-    var statusLabel = {open:'미해결', in_progress:'처리중', resolved:'완료'};
-    var partLabel = {kitchen:'주방', hall:'홀', service:'서비스', common:'공통'};
-    var nextStatus = {open:'in_progress', in_progress:'resolved', resolved:'open'};
-    var nextLabel = {open:'처리중으로', in_progress:'완료로', resolved:'재오픈'};
-    var list = document.getElementById('iss-list');
-    if(!Array.isArray(issues)||!issues.length){list.innerHTML='<p style="text-align:center;padding:30px;color:#888;font-size:13px">등록된 이슈가 없습니다</p>';return;}
-    list.innerHTML = issues.map(function(iss){
-      var bcolor = iss.priority==='high'?'#D85A30':iss.priority==='medium'?'#EF9F27':'#1D9E75';
-      return '<div style="background:var(--bg2,#f8f8f6);border-radius:8px;padding:12px;border-left:4px solid '+bcolor+'">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">' +
-          '<span style="font-size:13px;font-weight:500;flex:1;color:var(--text,#333)">'+iss.title+'</span>' +
-          '<span style="font-size:11px;padding:2px 8px;border-radius:10px;'+statusStyle[iss.status]+'">'+statusLabel[iss.status]+'</span>' +
-          '<span style="font-size:11px;color:#888">'+partLabel[iss.part]+'</span>' +
-        '</div>' +
-        (iss.description?'<div style="font-size:12px;color:#888;margin-bottom:6px">'+iss.description+'</div>':'')+
-        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
-          (iss.assignee?'<span style="font-size:11px;color:#888">담당: '+iss.assignee+'</span>':'')+
-          '<span style="font-size:11px;color:#888">'+new Date(iss.created_at).toLocaleDateString('ko-KR')+'</span>'+
-          '<button onclick="issueUpdateStatus(''+iss.id+'',''+nextStatus[iss.status]+'')" style="padding:3px 8px;border-radius:5px;background:none;border:1px solid #ddd;font-size:11px;cursor:pointer;color:var(--text,#333)">→ '+nextLabel[iss.status]+'</button>'+
-          '<button onclick="issueOpenComments(''+iss.id+'',''+iss.title.replace(/'/g,'').substring(0,20)+'')" style="padding:3px 8px;border-radius:5px;background:none;border:1px solid #ddd;font-size:11px;cursor:pointer;color:var(--text,#333)">의견보기</button>'+
-        '</div>'+
-      '</div>';
-    }).join('');
-  });
+window.issueSubmit=function(){
+var title=document.getElementById("iss-title").value.trim();if(!title){alert("제목을 입력하세요");return;}
+fetch(U+"/rest/v1/report_issues",{method:"POST",headers:{"apikey":K,"Authorization":"Bearer "+K,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({title:title,part:document.getElementById("iss-part").value,priority:document.getElementById("iss-priority").value,assignee:document.getElementById("iss-assignee").value,description:document.getElementById("iss-desc").value})})
+.then(function(){document.getElementById("iss-form").style.display="none";["iss-title","iss-assignee","iss-desc"].forEach(function(id){document.getElementById(id).value="";});issueLoad();});
 };
-
-window.issueSubmit = function(){
-  var title = document.getElementById('iss-title').value.trim();
-  if(!title){alert('제목을 입력하세요'); return;}
-  fetch(SB+'/rest/v1/report_issues',{
-    method:'POST',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body:JSON.stringify({title:title, part:document.getElementById('iss-part').value, priority:document.getElementById('iss-priority').value, assignee:document.getElementById('iss-assignee').value, description:document.getElementById('iss-desc').value})
-  }).then(function(){
-    document.getElementById('iss-form').style.display='none';
-    ['iss-title','iss-assignee','iss-desc'].forEach(function(id){document.getElementById(id).value='';});
-    issueLoad();
-  });
+window.issueUpdateStatus=function(id,status){
+var data={status:status};if(status==="resolved")data.resolved_at=new Date().toISOString();else data.resolved_at=null;
+fetch(U+"/rest/v1/report_issues?id=eq."+id,{method:"PATCH",headers:{"apikey":K,"Authorization":"Bearer "+K,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify(data)}).then(function(){issueLoad();});
 };
-
-window.issueUpdateStatus = function(id, status){
-  fetch(SB+'/rest/v1/report_issues?id=eq.'+id,{
-    method:'PATCH',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body:JSON.stringify({status:status, resolved_at:status==='resolved'?new Date().toISOString():null})
-  }).then(function(){ issueLoad(); });
+window.issueOpenComments=function(issueId,title){
+CI=issueId;document.getElementById("iss-modal-title").textContent=title;document.getElementById("iss-comment-modal").style.display="flex";
+q("report_issue_comments?issue_id=eq."+issueId+"&order=created_at.asc").then(function(cs){
+var w=document.getElementById("iss-modal-comments");
+if(!Array.isArray(cs)||!cs.length){w.innerHTML="<p style='color:#888;font-size:13px'>의견 없음</p>";return;}
+w.innerHTML=cs.map(function(c){var dt=new Date(c.created_at).toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"});return "<div style='padding:8px 10px;background:var(--bg2,#f5f5f3);border-radius:6px;margin-bottom:4px'><div style='font-size:11px;color:#888;margin-bottom:3px'>"+c.author+" · "+dt+"</div><div style='font-size:13px'>"+c.content+"</div></div>";}).join("");});
 };
-
-window.issueOpenComments = function(issueId, title){
-  currentIssueId = issueId;
-  document.getElementById('iss-modal-title').textContent = title;
-  var modal = document.getElementById('iss-comment-modal');
-  modal.style.display = 'flex';
-  sbQ('report_issue_comments?issue_id=eq.'+issueId+'&order=created_at.asc').then(function(comments){
-    var wrap = document.getElementById('iss-modal-comments');
-    wrap.innerHTML = Array.isArray(comments)&&comments.length ? comments.map(function(c){
-      return '<div style="padding:8px 10px;background:var(--bg2,#f8f8f6);border-radius:6px">'+
-        '<div style="font-size:11px;color:#888;margin-bottom:3px">'+c.author+' · '+new Date(c.created_at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>'+
-        '<div style="font-size:13px;color:var(--text,#333)">'+c.content+'</div></div>';
-    }).join('') : '<p style="color:#888;font-size:13px">아직 의견이 없습니다</p>';
-  });
+window.issueCommentSubmit=function(){
+var author=document.getElementById("iss-comment-author").value.trim()||"익명",content=document.getElementById("iss-comment-text").value.trim();if(!content)return;
+fetch(U+"/rest/v1/report_issue_comments",{method:"POST",headers:{"apikey":K,"Authorization":"Bearer "+K,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({issue_id:CI,author:author,content:content})}).then(function(){document.getElementById("iss-comment-text").value="";issueOpenComments(CI,document.getElementById("iss-modal-title").textContent);});
 };
-
-window.issueCommentSubmit = function(){
-  var author = document.getElementById('iss-comment-author').value.trim()||'익명';
-  var content = document.getElementById('iss-comment-text').value.trim();
-  if(!content) return;
-  fetch(SB+'/rest/v1/report_issue_comments',{
-    method:'POST',
-    headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body:JSON.stringify({issue_id:currentIssueId, author:author, content:content})
-  }).then(function(){
-    document.getElementById('iss-comment-text').value='';
-    issueOpenComments(currentIssueId, document.getElementById('iss-modal-title').textContent);
-  });
+var _o=window.showExecTab;
+window.showExecTab=function(t,b){
+if(t==="report"||t==="issues"){document.querySelectorAll(".tab-panel").forEach(function(p){p.classList.remove("active");});document.querySelectorAll("#exec-tabs .tab-btn").forEach(function(b){b.classList.remove("active");});var panel=document.getElementById("tab-"+t);if(panel)panel.classList.add("active");if(b)b.classList.add("active");if(t==="issues")issueLoad();}else if(_o){_o(t,b);}
 };
-
-// showExecTab 확장
-var _orig = window.showExecTab;
-window.showExecTab = function(tabId, btn){
-  if(tabId==='report'||tabId==='issues'){
-    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});
-    document.querySelectorAll('#exec-tabs .tab-btn').forEach(function(b){b.classList.remove('active');});
-    var panel = document.getElementById('tab-'+tabId);
-    if(panel) panel.classList.add('active');
-    if(btn) btn.classList.add('active');
-    if(tabId==='issues') issueLoad();
-  } else if(_orig){ _orig(tabId, btn); }
-};
-
 })();
