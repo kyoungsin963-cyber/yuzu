@@ -1178,7 +1178,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
   <nav>
     <div class="tab-list" id="ops-tabs">
-      <button class="tab-btn active" onclick="showTab('compare',this)">📈 주간 비교</button>
+      <button class="tab-btn active" onclick="showTab('report',this)">📋 업무 보고</button>
+      <button class="tab-btn" onclick="showTab('issues',this)">🚨 이슈 현황</button>
+      <button class="tab-btn" onclick="showTab('compare',this)">📈 주간 비교</button>
       <button class="tab-btn" onclick="showTab('overview',this)">📊 이번주 개요</button>
       <button class="tab-btn" onclick="showTab('daily',this)">📅 일별 매출</button>
       <button class="tab-btn" onclick="showTab('hourly',this)">⏰ 시간대 분석</button>
@@ -1188,8 +1190,6 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
       <button class="tab-more-btn" id="ops-tabs-more-btn" aria-expanded="false">더보기</button>
     </div>
     <div class="tab-list" id="exec-tabs" style="display:none">
-      <button class="tab-btn" onclick="showExecTab('report',this)">📋 업무 보고</button>
-      <button class="tab-btn" onclick="showExecTab('issues',this)">🚨 이슈 현황</button>
       <button class="tab-btn active" onclick="showExecTab('executive',this)">💼 경영자 요약</button>
       <button class="tab-btn" onclick="showExecTab('exec-insight',this)">🎯 전략 제안</button>
     </div>
@@ -1200,7 +1200,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
     </div>
   </nav>
   <!-- 주간 비교 탭 -->
-  <div class="tab-panel active" id="tab-compare">
+  <div class="tab-panel" id="tab-compare">
     <div class="section-title">주간 비교 분석</div>
     <div id="ceo-brief" style="display:none;margin-bottom:28px"></div>
 
@@ -1301,7 +1301,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 
   <!-- 경영자 요약 탭 -->
   
-<div class="tab-panel" id="tab-report">
+<div class="tab-panel active" id="tab-report">
   <div class="section-title">📋 업무 보고</div>
   <div id="rpt-week-selector" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
     <select id="rpt-part" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
