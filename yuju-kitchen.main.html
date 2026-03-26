@@ -1300,7 +1300,79 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   </div>
 
   <!-- 경영자 요약 탭 -->
-  <div class="tab-panel" id="tab-executive">
+  
+<div class="tab-panel" id="tab-report">
+  <div class="section-title">📋 업무 보고</div>
+  <div id="rpt-week-selector" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <select id="rpt-part" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+      <option value="kitchen">🍳 주방</option>
+      <option value="hall">🪑 홀</option>
+      <option value="service">⭐ 서비스</option>
+    </select>
+    <input type="date" id="rpt-week" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+    <span style="font-size:12px;color:var(--text-sub,#888)">주간 시작일(월요일)</span>
+    <button onclick="rptLoad()" style="padding:6px 14px;border-radius:6px;background:#1D9E75;color:#fff;border:none;font-size:13px;cursor:pointer">불러오기</button>
+    <button onclick="rptSave()" style="padding:6px 14px;border-radius:6px;background:#378ADD;color:#fff;border:none;font-size:13px;cursor:pointer">저장</button>
+  </div>
+  <div id="rpt-items-wrap" style="display:grid;gap:10px"></div>
+  <div id="rpt-comment-wrap" style="margin-top:16px">
+    <div style="font-size:13px;font-weight:500;margin-bottom:6px;color:var(--text,#333)">📝 주간 총평 (Sin)</div>
+    <textarea id="rpt-sin-comment" rows="3" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333);resize:vertical;box-sizing:border-box" placeholder="이번 주 전체 코멘트를 입력하세요..."></textarea>
+    <button onclick="rptSaveComment()" style="margin-top:6px;padding:6px 14px;border-radius:6px;background:#534AB7;color:#fff;border:none;font-size:13px;cursor:pointer">총평 저장</button>
+  </div>
+  <div id="rpt-msg" style="margin-top:10px;font-size:13px;color:#1D9E75;min-height:20px"></div>
+</div>
+
+<div class="tab-panel" id="tab-issues">
+  <div class="section-title">🚨 이슈 현황</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button onclick="issueShowForm()" style="padding:6px 14px;border-radius:6px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer">+ 이슈 등록</button>
+    <select id="iss-filter-part" onchange="issueLoad()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+      <option value="">전체 파트</option>
+      <option value="kitchen">주방</option>
+      <option value="hall">홀</option>
+      <option value="service">서비스</option>
+      <option value="common">공통</option>
+    </select>
+    <select id="iss-filter-status" onchange="issueLoad()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+      <option value="">전체 상태</option>
+      <option value="open">미해결</option>
+      <option value="in_progress">처리중</option>
+      <option value="resolved">완료</option>
+    </select>
+  </div>
+  <div id="iss-form" style="display:none;background:var(--bg2,#f8f8f6);border-radius:8px;padding:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <input id="iss-title" placeholder="이슈 제목" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+      <select id="iss-part" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+        <option value="kitchen">주방</option><option value="hall">홀</option>
+        <option value="service">서비스</option><option value="common">공통</option>
+      </select>
+      <select id="iss-priority" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+        <option value="high">🔴 긴급</option><option value="medium" selected>🟡 보통</option><option value="low">🟢 낮음</option>
+      </select>
+      <input id="iss-assignee" placeholder="담당자" style="padding:7px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+    </div>
+    <textarea id="iss-desc" rows="2" placeholder="이슈 상세 내용" style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333);resize:vertical;box-sizing:border-box;margin-bottom:8px"></textarea>
+    <div style="display:flex;gap:8px">
+      <button onclick="issueSubmit()" style="padding:6px 16px;border-radius:6px;background:#D85A30;color:#fff;border:none;font-size:13px;cursor:pointer">등록</button>
+      <button onclick="document.getElementById('iss-form').style.display='none'" style="padding:6px 14px;border-radius:6px;background:none;border:1px solid var(--border,#ddd);font-size:13px;cursor:pointer;color:var(--text,#333)">취소</button>
+    </div>
+  </div>
+  <div id="iss-list" style="display:grid;gap:10px"></div>
+  <div id="iss-comment-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:999;align-items:center;justify-content:center">
+    <div style="background:var(--bg,#fff);border-radius:12px;padding:20px;width:min(520px,90vw);max-height:80vh;overflow-y:auto">
+      <div style="font-weight:500;margin-bottom:12px;color:var(--text,#333)" id="iss-modal-title">이슈 코멘트</div>
+      <div id="iss-modal-comments" style="display:grid;gap:8px;margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px">
+        <input id="iss-comment-author" placeholder="작성자" style="width:100px;padding:6px 8px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+        <input id="iss-comment-text" placeholder="의견 입력..." style="flex:1;padding:6px 8px;border-radius:6px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)" onkeydown="if(event.key==='Enter')issueCommentSubmit()">
+        <button onclick="issueCommentSubmit()" style="padding:6px 12px;border-radius:6px;background:#1D9E75;color:#fff;border:none;font-size:13px;cursor:pointer">등록</button>
+        <button onclick="document.getElementById('iss-comment-modal').style.display='none'" style="padding:6px 10px;border-radius:6px;background:none;border:1px solid var(--border,#ddd);font-size:13px;cursor:pointer;color:var(--text,#333)">닫기</button>
+      </div>
+    </div>
+  </div>
+</div><div class="tab-panel" id="tab-executive">
 
     <!-- ① 상단 헤더: 날짜 + 상태 -->
     <div class="exec-header-row">
@@ -6099,6 +6171,169 @@ syncMobileDockVisibility();
 bootstrapStartPageFromLastData().catch(err=>{
   console.warn('bootstrapStartPageFromLastData:',err?.message||err);
 });
+</script>
+
+<script>
+// ── 업무보고 & 이슈 모듈 ──
+const SB = 'https://hcdrqycgdcmwnqgahvqc.supabase.co', SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjZHJxeWNnZGNtd25xZ2FodnFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY3NzcwNTksImV4cCI6MjAyMjM1MzA1OX0.J2a3TkDPJDpEAGmNxGmqpF5d-YHJKl5vMD7oOI0kxPo';
+const sbQ = (path, opts={}) => fetch(SB+'/rest/v1/'+path, {headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=representation'},...opts}).then(r=>r.json());
+
+// 이번 주 월요일 기본값
+function getMonday(d=new Date()){const day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);return new Date(d.setDate(diff)).toISOString().slice(0,10);}
+document.addEventListener('DOMContentLoaded',()=>{
+  const wd = document.getElementById('rpt-week');
+  if(wd) wd.value = getMonday();
+});
+
+// ── 업무보고 ──
+let rptCache = [];
+async function rptLoad(){
+  const part = document.getElementById('rpt-part').value;
+  const week = document.getElementById('rpt-week').value;
+  if(!week){alert('주간 시작일을 선택하세요');return;}
+  const items = await sbQ('report_eval_items?part=eq.'+part+'&is_active=eq.true&order=sort_order');
+  const scores = await sbQ('report_weekly_scores?week_start=eq.'+week+'&select=*,report_eval_items(part)');
+  rptCache = items;
+  const scoreMap = {};
+  scores.forEach(s=>{ scoreMap[s.item_id]={score:s.score,memo:s.memo,raw:s.raw_value}; });
+  const wrap = document.getElementById('rpt-items-wrap');
+  const partLabel = {kitchen:'🍳 주방',hall:'🪑 홀',service:'⭐ 서비스'};
+  const typeLabel = {subjective:'주관점수',numeric:'수치',hq_directive:'본사지침'};
+  wrap.innerHTML = items.map(it=>{
+    const s = scoreMap[it.id]||{};
+    const isNum = it.type==='numeric';
+    const isHq = it.type==='hq_directive';
+    return `<div style="background:var(--bg2,#f8f8f6);border-radius:8px;padding:12px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start">
+      <div>
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px;color:var(--text,#333)">${it.title}</div>
+        <div style="font-size:11px;color:var(--text-sub,#888);margin-bottom:6px">${typeLabel[it.type]}${it.target_value!=null?' · 목표: '+it.target_value:''}</div>
+        ${isHq?
+          `<select data-id="${it.id}" class="rpt-score-hq" style="padding:5px 8px;border-radius:5px;border:1px solid var(--border,#ddd);font-size:12px;background:var(--bg,#fff);color:var(--text,#333)">
+            <option value="100"${s.score===100?' selected':''}>✅ 완료 (100)</option>
+            <option value="50"${s.score===50?' selected':''}>⚠️ 부분완료 (50)</option>
+            <option value="0"${s.score===0?' selected':''}>❌ 미완료 (0)</option>
+          </select>`:
+          `<div style="display:flex;align-items:center;gap:8px">
+            <input type="number" data-id="${it.id}" class="rpt-score-input" min="0" max="${isNum?999:100}" value="${isNum?(s.raw||''):(s.score||''||0)}" placeholder="${isNum?'실제값 입력':'0-100점'}" style="width:80px;padding:5px 8px;border-radius:5px;border:1px solid var(--border,#ddd);font-size:13px;background:var(--bg,#fff);color:var(--text,#333)">
+            ${isNum&&it.target_value?'<span style="font-size:11px;color:var(--text-sub,#888)">목표 '+it.target_value+'%</span>':''}
+          </div>`}
+        <input type="text" data-id="${it.id}" class="rpt-memo-input" placeholder="메모 (선택)" value="${s.memo||''}" style="width:100%;margin-top:6px;padding:5px 8px;border-radius:5px;border:1px solid var(--border,#ddd);font-size:12px;background:var(--bg,#fff);color:var(--text,#333);box-sizing:border-box">
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function rptSave(){
+  const week = document.getElementById('rpt-week').value;
+  if(!rptCache.length){alert('먼저 불러오기를 클릭하세요');return;}
+  const rows = rptCache.map(it=>{
+    const scoreEl = document.querySelector(`.rpt-score-input[data-id="${it.id}"],`, `.rpt-score-hq[data-id="${it.id}"]`);
+    const memoEl = document.querySelector(`.rpt-memo-input[data-id="${it.id}"]`);
+    const rawVal = parseFloat(document.querySelector(`.rpt-score-input[data-id="${it.id}"]`)?.value)||0;
+    const hqVal = parseInt(document.querySelector(`.rpt-score-hq[data-id="${it.id}"]`)?.value)||0;
+    const scoreVal = it.type==='numeric'? Math.max(0,Math.min(100,Math.round((1-(rawVal-it.target_value)/it.target_value)*100))) : (it.type==='hq_directive'?hqVal:rawVal);
+    return {item_id:it.id,week_start:week,raw_value:rawVal,score:Math.max(0,Math.min(100,scoreVal||0)),evaluator:'점장',memo:memoEl?.value||''};
+  });
+  const res = await sbQ('report_weekly_scores?on_conflict=item_id,week_start',{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(rows)});
+  document.getElementById('rpt-msg').textContent = Array.isArray(res)?'✅ '+res.length+'개 항목 저장 완료':'저장 오류: '+JSON.stringify(res).substring(0,50);
+  setTimeout(()=>document.getElementById('rpt-msg').textContent='',3000);
+}
+
+async function rptSaveComment(){
+  const week = document.getElementById('rpt-week').value;
+  const comment = document.getElementById('rpt-sin-comment').value;
+  await sbQ('report_weekly_reports?on_conflict=week_start',{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({week_start:week,sin_comment:comment})});
+  document.getElementById('rpt-msg').textContent='✅ 총평 저장 완료';
+  setTimeout(()=>document.getElementById('rpt-msg').textContent='',3000);
+}
+
+// ── 이슈 현황 ──
+let currentIssueId = null;
+function issueShowForm(){document.getElementById('iss-form').style.display='block';}
+
+async function issueLoad(){
+  let q='report_issues?order=created_at.desc';
+  const p=document.getElementById('iss-filter-part')?.value;
+  const s=document.getElementById('iss-filter-status')?.value;
+  if(p)q+='&part=eq.'+p;
+  if(s)q+='&status=eq.'+s;
+  const issues = await sbQ(q);
+  const partLabel={kitchen:'🍳 주방',hall:'🪑 홀',service:'⭐ 서비스',common:'📌 공통'};
+  const statusLabel={open:'🔴 미해결',in_progress:'🟡 처리중',resolved:'🟢 완료'};
+  const priorityLabel={high:'🔴 긴급',medium:'🟡 보통',low:'🟢 낮음'};
+  const list = document.getElementById('iss-list');
+  if(!Array.isArray(issues)||!issues.length){list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-sub,#888);font-size:13px">등록된 이슈가 없습니다</div>';return;}
+  list.innerHTML = issues.map(iss=>`
+    <div style="background:var(--bg2,#f8f8f6);border-radius:8px;padding:12px;border-left:4px solid ${iss.priority==='high'?'#D85A30':iss.priority==='medium'?'#EF9F27':'#1D9E75'}">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:500;color:var(--text,#333);flex:1">${iss.title}</span>
+        <span style="font-size:11px;padding:2px 7px;border-radius:10px;background:${iss.status==='open'?'#FCEBEB':iss.status==='in_progress'?'#FAEEDA':'#E1F5EE'};color:${iss.status==='open'?'#A32D2D':iss.status==='in_progress'?'#854F0B':'#0F6E56'}">${statusLabel[iss.status]}</span>
+        <span style="font-size:11px;color:var(--text-sub,#888)">${partLabel[iss.part]||iss.part}</span>
+      </div>
+      ${iss.description?'<div style="font-size:12px;color:var(--text-sub,#888);margin-bottom:6px">'+iss.description+'</div>':''}
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--text-sub,#888)">${iss.assignee?'담당: '+iss.assignee:''}</span>
+        <span style="font-size:11px;color:var(--text-sub,#888)">${new Date(iss.created_at).toLocaleDateString('ko-KR')}</span>
+        <button onclick="issueUpdateStatus('${iss.id}','${iss.status==='open'?'in_progress':iss.status==='in_progress'?'resolved':'open'}')" style="padding:3px 8px;border-radius:5px;background:none;border:1px solid var(--border,#ddd);font-size:11px;cursor:pointer;color:var(--text,#333)">${iss.status==='open'?'→ 처리중':iss.status==='in_progress'?'→ 완료':'→ 재오픈'}</button>
+        <button onclick="issueOpenComments('${iss.id}',`${iss.title.replace(/`/g,'')}`)" style="padding:3px 8px;border-radius:5px;background:none;border:1px solid var(--border,#ddd);font-size:11px;cursor:pointer;color:var(--text,#333)">💬 의견</button>
+      </div>
+    </div>`).join('');
+}
+
+async function issueSubmit(){
+  const title=document.getElementById('iss-title').value.trim();
+  if(!title){alert('제목을 입력하세요');return;}
+  await sbQ('report_issues',{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({
+    title,part:document.getElementById('iss-part').value,
+    priority:document.getElementById('iss-priority').value,
+    assignee:document.getElementById('iss-assignee').value,
+    description:document.getElementById('iss-desc').value
+  })});
+  document.getElementById('iss-form').style.display='none';
+  ['iss-title','iss-assignee','iss-desc'].forEach(id=>document.getElementById(id).value='');
+  issueLoad();
+}
+
+async function issueUpdateStatus(id,status){
+  await sbQ('report_issues?id=eq.'+id,{method:'PATCH',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({status,resolved_at:status==='resolved'?new Date().toISOString():null})});
+  issueLoad();
+}
+
+async function issueOpenComments(issueId, title){
+  currentIssueId = issueId;
+  document.getElementById('iss-modal-title').textContent = '💬 ' + title;
+  document.getElementById('iss-comment-modal').style.display = 'flex';
+  const comments = await sbQ('report_issue_comments?issue_id=eq.'+issueId+'&order=created_at.asc');
+  const wrap = document.getElementById('iss-modal-comments');
+  wrap.innerHTML = Array.isArray(comments)&&comments.length ? comments.map(c=>`
+    <div style="padding:8px 10px;background:var(--bg2,#f8f8f6);border-radius:6px">
+      <div style="font-size:11px;color:var(--text-sub,#888);margin-bottom:3px">${c.author} · ${new Date(c.created_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      <div style="font-size:13px;color:var(--text,#333)">${c.content}</div>
+    </div>`).join('') : '<div style="color:var(--text-sub,#888);font-size:13px">아직 의견이 없습니다</div>';
+}
+
+async function issueCommentSubmit(){
+  const author=document.getElementById('iss-comment-author').value.trim()||'익명';
+  const content=document.getElementById('iss-comment-text').value.trim();
+  if(!content)return;
+  await sbQ('report_issue_comments',{method:'POST',headers:{'apikey':SKEY,'Authorization':'Bearer '+SKEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({issue_id:currentIssueId,author,content})});
+  document.getElementById('iss-comment-text').value='';
+  issueOpenComments(currentIssueId, document.getElementById('iss-modal-title').textContent.replace('💬 ',''));
+}
+
+// showExecTab 확장
+const _origShowExecTab = window.showExecTab;
+window.showExecTab = function(tabId, btn){
+  if(tabId==='report'||tabId==='issues'){
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('#exec-tabs .tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-'+tabId)?.classList.add('active');
+    if(btn)btn.classList.add('active');
+    if(tabId==='issues')issueLoad();
+  } else if(_origShowExecTab){
+    _origShowExecTab(tabId, btn);
+  }
+};
 </script>
 </body>
 </html>
